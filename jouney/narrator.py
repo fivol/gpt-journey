@@ -27,8 +27,8 @@ class Narrator:
         wait_phrase_msg = await self._bot.send_message(self._chat_id, wait_phrase)
         hourglass_msg = await self._bot.send_message(self._chat_id, "⏳")
         await self._bot.send_chat_action(chat_id=self._chat_id, action="typing")
-        text, options = self._story.get_story(option)
-        img = self._openai_api.get_img(text)
+        text, options = await self._story.get_story(option)
+        img = await self._openai_api.get_img(text)
 
         img_file = InputFile.from_url(img)
 

@@ -7,9 +7,9 @@ class OpenAIAPI:
         openai.api_key = token
 
     @classmethod
-    def get_img(cls, prompt, size: str = "256x256") -> str:
+    async def get_img(cls, prompt, size: str = "256x256") -> str:
         try:
-            response = openai.Image.create(
+            response = await openai.Image.acreate(
                 prompt=prompt,
                 n=1,
                 size=size
@@ -21,8 +21,8 @@ class OpenAIAPI:
         return img_url
 
     @classmethod
-    def get_completion(cls, message_history: list[dict[str, str]]) -> str:
-        completion = openai.ChatCompletion.create(
+    async def get_completion(cls, message_history: list[dict[str, str]]) -> str:
+        completion = await openai.ChatCompletion.acreate(
             model="gpt-3.5-turbo",
             messages=message_history
         )

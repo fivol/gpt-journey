@@ -20,8 +20,8 @@ class StoryManager:
             {"role": "assistant", "content": assistant_answer}
         ]
 
-    def get_story(self, option: str) -> tuple[str, list[str]]:
-        reply_content, message_history = self._chat(option)
+    async def get_story(self, option: str) -> tuple[str, list[str]]:
+        reply_content, message_history = await self._chat(option)
 
         print(reply_content)
         print("\n\n\n\n")
@@ -32,11 +32,11 @@ class StoryManager:
 
         return text, options
 
-    def _chat(self, message):
+    async def _chat(self, message):
         message_history = self._message_history
         message_history.append({"role": "user", "content": message})
 
-        reply_content = self._openai_api.get_completion(message_history)
+        reply_content = await self._openai_api.get_completion(message_history)
 
         message_history.append({"role": "assistant", "content": f"{reply_content}"})
 
