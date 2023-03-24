@@ -26,7 +26,7 @@ class StoryManager:
         print(reply_content)
         print("\n\n\n\n")
 
-        text = reply_content.split("1: ")[0]
+        text = reply_content.split("1: ")[0].strip()
 
         options = re.findall(r"\d: (.*)", reply_content)
 

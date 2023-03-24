@@ -6,7 +6,7 @@ from jouney.api_provider import OpenAIAPI
 from jouney.bot import dp, bot
 
 from jouney.config import config
-from jouney.data import buttons, texts, prompts, States
+from jouney.data import buttons, texts, prompts, States, phrases
 from jouney.narrator import Narrator
 from jouney.story_manager import StoryManager
 from jouney.utils import gen_keyboard, text
@@ -41,7 +41,7 @@ async def start_story(message: Message, state: FSMContext, story_context: str = 
     if story_context is not None:
         story.set_context(story_context)
     await state.update_data({"story": story})
-    narrator = Narrator(bot, message.chat.id, story, openai_api)
+    narrator = Narrator(bot, message.chat.id, story, openai_api, phrases)
     await narrator.start_story(prompts["start_story"])
 
 
@@ -55,7 +55,7 @@ async def restart(message: Message, state: FSMContext):
 async def option_handler(message: Message, state: FSMContext):
     data = await state.get_data()
     story = data.get("story")
-    narrator = Narrator(bot, message.chat.id, story, openai_api)
+    narrator = Narrator(bot, message.chat.id, story, openai_api, phrases)
     await narrator.iter_story(message.text)
     await state.update_data({"story": story})
 
