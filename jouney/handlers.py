@@ -1,9 +1,7 @@
-import io
 import random
 
-import requests
 from aiogram.dispatcher import FSMContext
-from aiogram.types import Message, ContentType, InputFile, KeyboardButton
+from aiogram.types import Message, ContentType
 
 from jouney.api_provider import OpenAIAPI
 from jouney.bot import dp, bot
@@ -20,10 +18,9 @@ openai_api = OpenAIAPI(config.OPENAI_TOKEN)
 narrators = NarratorProvider(bot, openai_api, phrases)
 
 
-@dp.message_handler(commands=["test"], state="*")
-async def test(message: Message, state: FSMContext):
-    response = requests.get("https://pythonprogramming.net/static/images/imgfailure.png")
-    await bot.send_photo(message.chat.id, InputFile(io.BytesIO(response.content)))
+@dp.message_handler(commands=["help"], state="*")
+async def help_handler(message: Message):
+    await message.reply(texts["help"])
 
 
 @dp.message_handler(commands=["start"], state="*")
