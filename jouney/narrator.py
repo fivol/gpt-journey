@@ -34,10 +34,18 @@ class Narrator:
         self._story_id = None
         self._story_item_id = None
         self._img_content = {}
+        self._current_task = None
 
     def cancel_loading(self):
-        for opt, task in self._load_tasks:
-            task.cancel()
+        try:
+            if self._current_task is not None:
+                self._current_task.cancel()
+                logger.debug("Cancel generating story")
+            for opt, task in self._load_tasks:
+                task.cancel()
+                logger.debug("Cancel task: {}", opt)
+        except:
+            logger.exception("Error while cancel loading")
         self._load_tasks = []
 
     async def _send_wait_phrase(self) -> TmpMessage:
@@ -122,6 +130,11 @@ class Narrator:
         return self._img_content[img]
 
     async def iter_story(self, option: str):
+        task = asyncio.create_task(self._iter_story(option))
+        self._current_task = task
+        return await task
+
+    async def _iter_story(self, option: str):
         if option.isnumeric() and self._story_id is None:
             raise ValueError("Story not started")
         if option.isnumeric() and self._current_options:
