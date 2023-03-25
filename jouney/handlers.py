@@ -1,8 +1,9 @@
 import io
+import random
 
 import requests
 from aiogram.dispatcher import FSMContext
-from aiogram.types import Message, ContentType, InputFile
+from aiogram.types import Message, ContentType, InputFile, KeyboardButton
 
 from jouney.api_provider import OpenAIAPI
 from jouney.bot import dp, bot
@@ -32,10 +33,27 @@ async def start(message: Message, state: FSMContext):
     narrator = narrators.get_narrator(message.chat.id)
     if narrator is not None:
         narrator.cancel_loading()
+    examples = random.choices(texts["examples"], k=4)
+    await state.update_data(examples=examples)
+    ask_setting_text = texts["start_story"]
+    ask_setting_text += f"\n\n{texts['ask_story_setting']}\n\n" + "\n\n".join(
+        [f"*{i + 1}.* {example}" for i, example in enumerate(examples)])
+    btns = []
+    for i, example in enumerate(examples):
+        btns.append(f"{i + 1}")
     await message.answer(
-        texts["start_story"],
-        reply_markup=gen_keyboard([[buttons["skip_setting"]]])
+        ask_setting_text,
+        parse_mode="Markdown",
+        reply_markup=gen_keyboard([btns, [buttons["skip_setting"]]])
     )
+
+
+@dp.message_handler(regexp=r"\d", state=States.wait_story_desc)
+async def select_example(message: Message, state: FSMContext):
+    example_id = int(message.text) - 1
+    examples = (await state.get_data())["examples"]
+    story_setting = examples[example_id]
+    await start_story(message, state, story_context=story_setting)
 
 
 @dp.message_handler(text(buttons["skip_setting"]), state=States.wait_story_desc)
@@ -60,7 +78,7 @@ async def start_story(message: Message, state: FSMContext, story_context: str = 
     user = UserDB(message.chat.id, get_async_db())
     await user.create(message.from_user.full_name, message.from_user.username)
     narrator = narrators.create_narrator(message.chat.id, story, user)
-    await narrator.start_story(prompts["start_story"])
+    await narrator.start_story(prompts["start_story"], context_prompt=story_context)
 
 
 @dp.message_handler(text(buttons["restart"]), state="*")
@@ -70,7 +88,7 @@ async def restart(message: Message, state: FSMContext):
 
 
 @dp.message_handler(state=States.story)
-async def option_handler(message: Message, state: FSMContext):
+async def option_handler(message: Message):
     narrator = narrators.get_narrator(message.chat.id)
     await narrator.iter_story(message.text)
 

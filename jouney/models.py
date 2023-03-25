@@ -30,6 +30,7 @@ stories_table = Table(
     Column("id", Integer, primary_key=True),
     Column("ts", ts_field, nullable=False, server_default=ts_default),
     Column("user_id", BigInteger(), ForeignKey('users.id')),
+    Column("prompt", Text(), nullable=True),
 )
 
 
