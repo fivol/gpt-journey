@@ -8,5 +8,5 @@ def gen_keyboard(keyboard):
     )
 
 
-def text(txt):
-    return lambda m: m.text == txt
+def text(*texts):
+    return lambda m: m.text in texts

@@ -1,7 +1,7 @@
 
-from sqlalchemy import create_engine, MetaData, Integer, ForeignKey, UniqueConstraint, text, Text
-from sqlalchemy import Table, Column, BigInteger, String, DateTime
-from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP
+from sqlalchemy import create_engine, MetaData, Integer, ForeignKey, text, Text
+from sqlalchemy import Table, Column, BigInteger, String
+from sqlalchemy.dialects.postgresql import TIMESTAMP
 from sqlalchemy.orm import sessionmaker
 
 from jouney.config import config
@@ -20,6 +20,7 @@ users_table = Table(
     metadata,
     Column("id", BigInteger, primary_key=True),
     Column("name", String(256), nullable=True),
+    Column("lang", String(10), nullable=True),
     Column("username", String(256), nullable=True),
     Column("ts", ts_field, nullable=False, server_default=ts_default),
 )

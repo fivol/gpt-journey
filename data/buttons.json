@@ -1,5 +1,7 @@
 {
   "skip_setting": "\uD83D\uDD00 Запустить случайную историю",
   "restart": "\uD83C\uDF1F Начать новую историю",
-  "settings": "⚙️ Настойки"
+  "settings": "⚙️ Настойки",
+  "lang_ru": "Русский",
+  "lang_en": "Enlish"
 }

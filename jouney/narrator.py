@@ -1,15 +1,14 @@
 import asyncio
 import io
-import os
 import random
 
 import aiohttp
-from aiogram.types import InputFile, KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import InputFile, ReplyKeyboardRemove
 from loguru import logger
 from pydantic import BaseModel
 
 from jouney.api_provider import OpenAIAPI
-from jouney.data import buttons
+from jouney.data import DataProvider
 from jouney.story_manager import StoryManager
 from jouney.user import UserDB
 from jouney.utils import gen_keyboard
@@ -22,13 +21,13 @@ class TmpMessage(BaseModel):
 
 class Narrator:
     def __init__(self, bot, chat_id: int, story: StoryManager, openai_api: OpenAIAPI,
-                 user: UserDB, wait_phrases: list[str] = None):
+                 user: UserDB, data_provider: DataProvider):
+        self.data = data_provider
         self._chat_id = chat_id
         self._bot = bot
         self._story = story
         self._user = user
         self._openai_api = openai_api
-        self._wait_phrases = wait_phrases
         self._load_tasks = []
         self._current_options = []
         self._story_id = None
@@ -67,7 +66,7 @@ class Narrator:
         return await self.iter_story(start_prompt)
 
     def _select_wait_phrase(self) -> str:
-        return "🤖 " + random.choice(self._wait_phrases)
+        return "🤖 " + random.choice(self.data.texts["phrases"])
 
     async def _preload_option(self, option: str) -> tuple[str, list[str], str]:
         logger.debug("Start preload: {}", option)
@@ -110,11 +109,10 @@ class Narrator:
             self._load_tasks.append((option, task))
         return text, options, img
 
-    @classmethod
-    def _build_message(cls, text: str, options: list[str]) -> tuple[str, list[str]]:
+    def _build_message(self, text: str, options: list[str]) -> tuple[str, list[str]]:
         if len(options) == 0:
             return text, []
-        message = f"{text}\n\nВыберите вариант:"
+        message = f"{text}\n\n" + self.data.texts["select_option"]
         btns = []
 
         for i, option in enumerate(options):
@@ -157,7 +155,7 @@ class Narrator:
         keyboard = []
         if btns:
             keyboard.append(btns)
-        keyboard.append([buttons["restart"]])
+        keyboard.append([self.data.buttons["restart"]])
 
         img_file = InputFile(io.BytesIO(await self._get_img_content(img)))
         await self._bot.send_photo(
