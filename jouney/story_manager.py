@@ -53,9 +53,7 @@ class StoryManager:
         self._add_completion(reply_content)
         self._clear_cache()
         logger.debug("Story generated")
-
         print(reply_content)
-        print("\n\n")
 
         return self._split_story(reply_content)
 
