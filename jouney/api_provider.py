@@ -7,7 +7,7 @@ class OpenAIAPI:
         openai.api_key = token
 
     @classmethod
-    async def get_img(cls, prompt, size: str = "256x256") -> str:
+    async def get_img(cls, prompt, size: str = "512x512") -> str:
         try:
             response = await openai.Image.acreate(
                 prompt=prompt,
@@ -16,7 +16,7 @@ class OpenAIAPI:
             )
             img_url = response.data[0].url
         except openai.error.InvalidRequestError:
-            logger.error("OpenAI Image safety error: {}", prompt.replace("\n", " "))
+            logger.error("OpenAI Image invalid error: {}", prompt.replace("\n", " "))
             img_url = "https://pythonprogramming.net/static/images/imgfailure.png"
         except:
             logger.exception("OpenAI API error")
