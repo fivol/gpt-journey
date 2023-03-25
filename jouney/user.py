@@ -37,18 +37,30 @@ class UserDB(ChatDB):
     def stories(self) -> StoriesDB:
         return StoriesDB(self._chat_id, self._db)
 
-    async def create(self, name: str, username: str):
+    async def create(self, name: str, username: str, lang: str):
         try:
             return await self._db.execute(
-                'INSERT INTO users (id, name, username) VALUES ($1, $2, $3)',
-                self._chat_id, name, username
+                'INSERT INTO users (id, name, username, lang) VALUES ($1, $2, $3, $4)',
+                self._chat_id, name, username, lang
             )
         except asyncpg.UniqueViolationError:
             pass
 
+    async def remove_lang(self):
+        return await self._db.execute(
+            'UPDATE users SET lang = NULL WHERE id = $1',
+            self._chat_id
+        )
+
+    async def set_lang(self, lang: str):
+        return await self._db.execute(
+            'UPDATE users SET lang = $1 WHERE id = $2',
+            lang, self._chat_id
+        )
+
     async def get_user(self):
         return await self._db.one(
-            'SELECT * FROM users WHERE user_id = $1',
+            'SELECT * FROM users WHERE id = $1',
             self._chat_id
         )
 
