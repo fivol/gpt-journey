@@ -1,5 +1,16 @@
 ## Inspired [this project by Sentdex](https://github.com/Sentdex/GPT-Journey)
 
+
+## Installation
+```
+pip install -r requirements.txt
+```
+
+## Local run
+```
+python main.py
+```
+
 ## Bot init prompts
 
 - Original prompt:
