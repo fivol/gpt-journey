@@ -18,7 +18,7 @@ class StoryManager:
     def set_context(self, text: str):
         self._message_history.append({
             "role": "user",
-            "content": f"The setting of the story is as follows: {text}"
+            "content": f"The main character and setting of the story is as follows: {text}"
         })
 
     @classmethod
@@ -37,8 +37,8 @@ class StoryManager:
 
     @classmethod
     def _split_story(cls, reply_content: str) -> tuple[str, list[str]]:
-        text = reply_content.split("1: ")[0].strip()
-        options = re.findall(r"\d: (.*)", reply_content)
+        text = reply_content.split("1. ")[0].strip()
+        options = re.findall(r"\d. (.*)", reply_content)
         options = [item.strip() for item in options]
         return text, options
 

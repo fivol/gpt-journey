@@ -12,6 +12,7 @@ from jouney.api_provider import OpenAIAPI
 from jouney.data import buttons
 from jouney.story_manager import StoryManager
 from jouney.user import UserDB
+from jouney.utils import gen_keyboard
 
 
 class TmpMessage(BaseModel):
@@ -53,9 +54,9 @@ class Narrator:
         await self._bot.delete_message(self._chat_id, tmp_msg.wait_phrase_msg)
         await self._bot.delete_message(self._chat_id, tmp_msg.hourglass_msg)
 
-    async def start_story(self, message: str):
-        self._story_id = await self._user.stories.create()
-        return await self.iter_story(message)
+    async def start_story(self, start_prompt: str, context_prompt):
+        self._story_id = await self._user.stories.create(context_prompt)
+        return await self.iter_story(start_prompt)
 
     def _select_wait_phrase(self) -> str:
         return "🤖 " + random.choice(self._wait_phrases)
@@ -64,7 +65,13 @@ class Narrator:
         logger.debug("Start preload: {}", option)
         text, options = await self._story.load_story(option)
         logger.debug("Preload option text: {} done", option)
-        img = await self._openai_api.get_img(text)
+        img_desc = await self._openai_api.get_completion(
+            [{"role": "user",
+              "content": f"Write a short prompt in English to generate "
+                         f"an image with DALLE to illustrate this story: \"{text}\". "
+                         f"Write only prompt, nothing more"}])
+        logger.debug("Img prompt done: {}", img_desc)
+        img = await self._openai_api.get_img(img_desc)
         logger.debug("Preload option image: {} done", option)
         await self._get_img_content(img)
         logger.debug("Image downloaded: {}", option)
@@ -96,13 +103,15 @@ class Narrator:
         return text, options, img
 
     @classmethod
-    def _build_message(cls, text: str, options: list[str]) -> tuple[str, list[KeyboardButton]]:
+    def _build_message(cls, text: str, options: list[str]) -> tuple[str, list[str]]:
+        if len(options) == 0:
+            return text, []
         message = f"{text}\n\nВыберите вариант:"
         btns = []
 
         for i, option in enumerate(options):
             message += f"\n\n{i + 1}. {option}"
-            btns.append(KeyboardButton(f"{i + 1}"))
+            btns.append(f"{i + 1}")
         return message.strip(), btns
 
     async def _get_img_content(self, img: str) -> bytes:
@@ -123,17 +132,22 @@ class Narrator:
 
         text, options, img = await self._get_story(option)
         message, btns = self._build_message(text, options)
-
         self._story_item_id = await self._user.stories.add_text(self._story_id, message, img)
+
+        if len(message) > 1020:
+            logger.warning("Message too long: {}", self._story_item_id)
+            message = message[:1020] + "..."
 
         await self._remove_wait_phrase(wait_msg)
         await self._bot.send_chat_action(chat_id=self._chat_id, action="typing")
 
+        keyboard = []
+        if btns:
+            keyboard.append(btns)
+        keyboard.append([buttons["restart"]])
+
         img_file = InputFile(io.BytesIO(await self._get_img_content(img)))
         await self._bot.send_photo(
             chat_id=self._chat_id, photo=img_file, caption=message,
-            reply_markup=ReplyKeyboardMarkup(
-                [btns, [KeyboardButton(buttons["restart"])]],
-                resize_keyboard=True
-            )
+            reply_markup=gen_keyboard(keyboard)
         )

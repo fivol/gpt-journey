@@ -10,10 +10,10 @@ class ChatDB:
 
 
 class StoriesDB(ChatDB):
-    async def create(self):
+    async def create(self, prompt: str | None = None) -> int:
         response = await self._db.one(
-            "INSERT INTO stories (user_id) VALUES ($1) returning *",
-            self._chat_id
+            "INSERT INTO stories (user_id, prompt) VALUES ($1, $2) returning *",
+            self._chat_id, prompt
         )
         return response["id"]
 
