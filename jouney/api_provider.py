@@ -15,6 +15,9 @@ class OpenAIAPI:
                 size=size
             )
             img_url = response.data[0].url
+        except openai.error.InvalidRequestError:
+            logger.exception("OpenAI Image safety error: {}", prompt.replace("\n", " "))
+            img_url = "https://pythonprogramming.net/static/images/imgfailure.png"
         except:
             logger.exception("OpenAI API error")
             img_url = "https://pythonprogramming.net/static/images/imgfailure.png"

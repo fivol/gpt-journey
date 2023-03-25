@@ -1,23 +1,37 @@
+import io
 
+import requests
 from aiogram.dispatcher import FSMContext
-from aiogram.types import Message, ContentType
+from aiogram.types import Message, ContentType, InputFile
 
 from jouney.api_provider import OpenAIAPI
 from jouney.bot import dp, bot
 
 from jouney.config import config
 from jouney.data import buttons, texts, prompts, States, phrases
-from jouney.narrator import Narrator
+from jouney.db import get_async_db
+from jouney.narrator_provider import NarratorProvider
 from jouney.story_manager import StoryManager
+from jouney.user import UserDB
 from jouney.utils import gen_keyboard, text
 
 openai_api = OpenAIAPI(config.OPENAI_TOKEN)
+narrators = NarratorProvider(bot, openai_api, phrases)
+
+
+@dp.message_handler(commands=["test"], state="*")
+async def test(message: Message, state: FSMContext):
+    response = requests.get("https://pythonprogramming.net/static/images/imgfailure.png")
+    await bot.send_photo(message.chat.id, InputFile(io.BytesIO(response.content)))
 
 
 @dp.message_handler(commands=["start"], state="*")
 async def start(message: Message, state: FSMContext):
     await message.answer(texts["intro"])
     await state.set_state(States.wait_story_desc)
+    narrator = narrators.get_narrator(message.chat.id)
+    if narrator is not None:
+        narrator.cancel_loading()
     await message.answer(texts["start_story"], reply_markup=gen_keyboard([[buttons["skip_setting"]]]))
 
 
@@ -40,8 +54,9 @@ async def start_story(message: Message, state: FSMContext, story_context: str = 
     )
     if story_context is not None:
         story.set_context(story_context)
-    await state.update_data({"story": story})
-    narrator = Narrator(bot, message.chat.id, story, openai_api, phrases)
+    user = UserDB(message.chat.id, get_async_db())
+    await user.create(message.from_user.full_name, message.from_user.username)
+    narrator = narrators.create_narrator(message.chat.id, story, user)
     await narrator.start_story(prompts["start_story"])
 
 
@@ -53,11 +68,8 @@ async def restart(message: Message, state: FSMContext):
 
 @dp.message_handler(state=States.story)
 async def option_handler(message: Message, state: FSMContext):
-    data = await state.get_data()
-    story = data.get("story")
-    narrator = Narrator(bot, message.chat.id, story, openai_api, phrases)
+    narrator = narrators.get_narrator(message.chat.id)
     await narrator.iter_story(message.text)
-    await state.update_data({"story": story})
 
 
 @dp.message_handler(state="*")
