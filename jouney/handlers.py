@@ -32,7 +32,10 @@ async def start(message: Message, state: FSMContext):
     narrator = narrators.get_narrator(message.chat.id)
     if narrator is not None:
         narrator.cancel_loading()
-    await message.answer(texts["start_story"], reply_markup=gen_keyboard([[buttons["skip_setting"]]]))
+    await message.answer(
+        texts["start_story"],
+        reply_markup=gen_keyboard([[buttons["skip_setting"]]])
+    )
 
 
 @dp.message_handler(text(buttons["skip_setting"]), state=States.wait_story_desc)
@@ -60,7 +63,7 @@ async def start_story(message: Message, state: FSMContext, story_context: str = 
     await narrator.start_story(prompts["start_story"])
 
 
-@dp.message_handler(text(buttons["restart"]), state=States.story)
+@dp.message_handler(text(buttons["restart"]), state="*")
 async def restart(message: Message, state: FSMContext):
     await state.set_state()
     await start(message, state)
