@@ -6,6 +6,11 @@
 pip install -r requirements.txt
 ```
 
+## Prod run
+```
+docker build . -t gpt-journey && docker run -d --name gpt-journey gpt-journey
+```
+
 ## Local run
 ```
 python main.py
