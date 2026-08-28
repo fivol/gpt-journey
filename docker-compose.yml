@@ -1,21 +1,22 @@
 version: "3.3"
+volumes:
+  postgres:
+
 services:
   app:
     build: .
     restart: always
-    network_mode: host
     depends_on:
       - db
     env_file:
-      - ".env"
+      - .env
+
   db:
-    image: postgres
+    image: postgres:14
     restart: always
     ports:
-      - "${PG_PORT}:5432"
+      - "${PG_PORT:-5432}:5432"
     environment:
-      POSTGRES_PASSWORD: "***REMOVED***"
+      POSTGRES_PASSWORD: postgres
     volumes:
       - postgres:/var/lib/postgresql/data
-volumes:
-  postgres:
